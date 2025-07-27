@@ -123,6 +123,7 @@ export interface TrainConfig {
   blockswap_enable_async?: boolean;
   blockswap_enable_predictive?: boolean;
   blockswap_debug?: boolean;
+  latent_fixed_size: number;
 }
 
 export interface QuantizeKwargsConfig {

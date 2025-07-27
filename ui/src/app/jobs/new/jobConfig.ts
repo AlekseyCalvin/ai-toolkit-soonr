@@ -82,6 +82,7 @@ export const defaultJobConfig: JobConfig = {
           blockswap_enable_async: true,
           blockswap_enable_predictive: true,
           blockswap_debug: false,
+          latent_fixed_size: 0,
         },
         model: {
           name_or_path: 'ostris/Flex.1-alpha',

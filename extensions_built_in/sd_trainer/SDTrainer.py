@@ -34,6 +34,7 @@ from diffusers import EMAModel
 from einops import rearrange
 import math
 from toolkit.train_tools import precondition_model_outputs_flow_match
+from torch.amp import GradScaler
 from toolkit.models.diffusion_feature_extraction import DiffusionFeatureExtractor, load_dfe
 from toolkit.util.wavelet_loss import wavelet_loss
 from toolkit.blockswap import enable_blockswap, BlockSwapManager
@@ -41,7 +42,8 @@ import torch.nn.functional as F
 
 
 def flush():
-    torch.cuda.empty_cache()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
     gc.collect()
 
 
@@ -1895,7 +1897,7 @@ class SDTrainer(BaseSDTrainProcess):
                 total_loss = loss
             else:
                 total_loss += loss
-            if len(batch_list) > 1 and self.model_config.low_vram:
+            if len(batch_list) > 1 and self.model_config.low_vram and torch.cuda.is_available():
                 torch.cuda.empty_cache()
 
 

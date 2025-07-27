@@ -511,14 +511,15 @@ class TrainConfig:
         # forces same noise for the same image at a given size.
         self.force_consistent_noise = kwargs.get('force_consistent_noise', False)
         self.blended_blur_noise = kwargs.get('blended_blur_noise', False)
-        
+
+        # sample fixed size latents from different resolution latents
+        self.latent_fixed_size = kwargs.get('latent_fixed_size', 0) # 0 means do not apply this
         # contrastive loss
         self.do_guidance_loss = kwargs.get('do_guidance_loss', False)
         self.guidance_loss_target: Union[int, List[int, int]] = kwargs.get('guidance_loss_target', 3.0)
         self.unconditional_prompt: str = kwargs.get('unconditional_prompt', '')
         if isinstance(self.guidance_loss_target, tuple):
-            self.guidance_loss_target = list(self.guidance_loss_target)
-
+            self.guidance_loss_target = list(self.guidance_loss_target
 
 ModelArch = Literal['sd1', 'sd2', 'sd3', 'sdxl', 'pixart', 'pixart_sigma', 'auraflow', 'flux', 'flex1', 'flex2', 'lumina2', 'vega', 'ssd', 'wan21']
 

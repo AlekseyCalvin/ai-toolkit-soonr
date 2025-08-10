@@ -78,9 +78,30 @@ const docs: { [key: string]: ConfigDoc } = {
     title: 'Do I2V',
     description: (
       <>
-        For video models that can handle both I2V (Image to Video) and T2V (Text to Video), this option sets this dataset
-        to be trained as an I2V dataset. This means that the first frame will be extracted from the video and used as the start image
-        for the video. If this option is not set, the dataset will be treated as a T2V dataset.
+        For video models that can handle both I2V (Image to Video) and T2V (Text to Video), this option sets this
+        dataset to be trained as an I2V dataset. This means that the first frame will be extracted from the video and
+        used as the start image for the video. If this option is not set, the dataset will be treated as a T2V dataset.
+      </>
+    ),
+  },
+  'train.unload_text_encoder': {
+    title: 'Unload Text Encoder',
+    description: (
+      <>
+        Unloading text encoder will cache the trigger word and the sample prompts and unload the text encoder from the
+        GPU. Captions in for the dataset will be ignored
+      </>
+    ),
+  },
+  'train.cache_text_embeddings': {
+    title: 'Cache Text Embeddings',
+    description: (
+      <>
+        <small>(experimental)</small>
+        <br />
+        Caching text embeddings will process and cache all the text embeddings from the text encoder to the disk. The
+        text encoder will be unloaded from the GPU. This does not work with things that dynamically change the prompt
+        such as trigger words, caption dropout, etc.
       </>
     ),
   },

@@ -2,7 +2,7 @@
 import { useMemo } from 'react';
 import { modelArchs, ModelArch, groupedModelOptions } from './options';
 import { defaultDatasetConfig } from './jobConfig';
-import { JobConfig } from '@/types';
+import { GroupedSelectOption, JobConfig, SelectOption } from '@/types';
 import { objectCopy } from '@/utils/basic';
 import { TextInput, SelectInput, Checkbox, FormGroup, NumberInput } from '@/components/formInputs';
 import Card from '@/components/Card';
@@ -39,6 +39,53 @@ export default function SimpleJob({
   }, [jobConfig.config.process[0].model.arch]);
 
   const isVideoModel = !!(modelArch?.group === 'video');
+
+  let topBarClass = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6';
+
+  if (modelArch?.disableSections?.includes('model.quantize')) {
+    topBarClass = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-6';
+  }
+
+  const transformerQuantizationOptions: GroupedSelectOption[] | SelectOption[] = useMemo(() => {
+    const hasARA = modelArch?.accuracyRecoveryAdapters && Object.keys(modelArch.accuracyRecoveryAdapters).length > 0;
+    if (!hasARA) {
+      return quantizationOptions;
+    }
+    let newQuantizationOptions = [
+      {
+        label: 'Standard',
+        options: [quantizationOptions[0], quantizationOptions[1]],
+      },
+    ];
+
+    // add ARAs if they exist for the model
+    let ARAs: SelectOption[] = [];
+    if (modelArch.accuracyRecoveryAdapters) {
+      for (const [label, value] of Object.entries(modelArch.accuracyRecoveryAdapters)) {
+         ARAs.push({ value, label });
+      }
+    }
+    if (ARAs.length > 0) {
+      newQuantizationOptions.push({
+        label: 'Accuracy Recovery Adapters',
+        options: ARAs,
+      });
+    }
+
+    let additionalQuantizationOptions: SelectOption[] = [];
+    // add the quantization options if they are not already included
+    for (let i = 2; i < quantizationOptions.length; i++) {
+      const option = quantizationOptions[i];
+      additionalQuantizationOptions.push(option);
+    }
+    if (additionalQuantizationOptions.length > 0) {
+      newQuantizationOptions.push({
+        label: 'Additional Quantization Options',
+        options: additionalQuantizationOptions,
+      });
+    }
+    return newQuantizationOptions;
+  }, [modelArch]);
 
   return (
     <>
@@ -166,16 +213,48 @@ export default function SimpleJob({
                 </div>
               </FormGroup>
             )}
-            {modelArch?.additionalSections?.includes('model.low_vram') && (
+{modelArch?.additionalSections?.includes('model.low_vram') && (
               <FormGroup label="Options">
-                  <Checkbox
-                    label="Low VRAM"
-                    checked={jobConfig.config.process[0].model.low_vram}
-                    onChange={value => setJobConfig(value, 'config.process[0].model.low_vram')}
-                  />
+                <Checkbox
+                  label="Low VRAM"
+                  checked={jobConfig.config.process[0].model.low_vram}
+                  onChange={value => setJobConfig(value, 'config.process[0].model.low_vram')}
+                />
               </FormGroup>
             )}
           </Card>
+          {modelArch?.disableSections?.includes('model.quantize') ? null : (
+            <Card title="Quantization">
+              <SelectInput
+                label="Transformer"
+                value={jobConfig.config.process[0].model.quantize ? jobConfig.config.process[0].model.qtype : ''}
+                onChange={value => {
+                  if (value === '') {
+                    setJobConfig(false, 'config.process[0].model.quantize');
+                    value = defaultQtype;
+                  } else {
+                    setJobConfig(true, 'config.process[0].model.quantize');
+                  }
+                  setJobConfig(value, 'config.process[0].model.qtype');
+                }}
+                options={transformerQuantizationOptions}
+              />
+              <SelectInput
+                label="Text Encoder"
+                value={jobConfig.config.process[0].model.quantize_te ? jobConfig.config.process[0].model.qtype_te : ''}
+                onChange={value => {
+                  if (value === '') {
+                    setJobConfig(false, 'config.process[0].model.quantize_te');
+                    value = defaultQtype;
+                  } else {
+                    setJobConfig(true, 'config.process[0].model.quantize_te');
+                  }
+                  setJobConfig(value, 'config.process[0].model.qtype_te');
+                }}
+                options={quantizationOptions}
+              />
+            </Card>
+          )}
           <Card title="Target Configuration">
             <SelectInput
               label="Target Type"

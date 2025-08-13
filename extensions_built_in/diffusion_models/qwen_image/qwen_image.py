@@ -10,9 +10,10 @@ from toolkit.models.base_model import BaseModel
 from toolkit.basic import flush
 from toolkit.prompt_utils import PromptEmbeds
 from toolkit.samplers.custom_flowmatch_sampler import CustomFlowMatchEulerDiscreteScheduler
+from toolkit.dequantize import patch_dequantization_on_save
 from toolkit.accelerator import get_accelerator, unwrap_model
 from optimum.quanto import freeze, QTensor
-from toolkit.util.quantize import quantize, get_qtype, quantize_model
+from toolkit.util.quantize import quantize, get_qtype
 import torch.nn.functional as F
 
 from diffusers import QwenImagePipeline, QwenImageTransformer2DModel, AutoencoderKLQwenImage
@@ -98,9 +99,23 @@ class QwenImageModel(BaseModel):
         )
 
         if self.model_config.quantize:
-            self.print_and_status_update("Quantizing Transformer")
-            quantize_model(self, transformer)
-            flush()
+            # patch the state dict method
+            patch_dequantization_on_save(transformer)
+            # move and quantize only certain pieces at a time.
+            quantization_type = get_qtype(self.model_config.qtype)
+            all_blocks = list(transformer.transformer_blocks)
+            self.print_and_status_update(" - quantizing transformer blocks")
+            for block in tqdm(all_blocks):
+                block.to(self.device_torch, dtype=dtype)
+                quantize(block, weights=quantization_type)
+                freeze(block)
+                block.to('cpu')
+                # flush()
+            
+            self.print_and_status_update(" - quantizing extras")
+            transformer.to(self.device_torch, dtype=dtype)
+            quantize(transformer, weights=quantization_type)
+            freeze(transformer)
         
         if self.model_config.low_vram:
             self.print_and_status_update("Moving transformer to CPU")

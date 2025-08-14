@@ -813,6 +813,7 @@ class DatasetConfig:
         self.flip_x: bool = kwargs.get('flip_x', False)
         self.flip_y: bool = kwargs.get('flip_y', False)
         self.augments: List[str] = kwargs.get('augments', [])
+        self.cache_text_embeddings: bool = kwargs.get('cache_text_embeddings', False)  # if true, will use alpha channel as mask
         self.control_path: Union[str,List[str]] = kwargs.get('control_path', None)  # depth maps, etc
         if self.control_path == '':
             self.control_path = None
